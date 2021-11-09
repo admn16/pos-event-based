@@ -5,8 +5,8 @@ services:
     ports:
       - 2181:2181
     environment:
-      ZOOKEEPER_CLIENT_PORT: 2181
-      ZOOKEEPER_TICK_TIME: 2000
+      - ZOOKEEPER_CLIENT_PORT=2181
+      - ZOOKEEPER_TICK_TIME=2000
 
   kafka:
     image: confluentinc/cp-kafka:latest
@@ -15,12 +15,12 @@ services:
     ports:
       - 29092:29092
     environment:
-      KAFKA_BROKER_ID: 1
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
-      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
-      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      - KAFKA_BROKER_ID=1
+      - KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      - KAFKA_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      - KAFKA_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
 
   kafka-ui:
     image: provectuslabs/kafka-ui
@@ -29,9 +29,11 @@ services:
       - "8080:8080"
     restart: always
     environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
-      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+      - KAFKA_CLUSTERS_0_NAME=local
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    depends_on:
+      - kafka
 
   client-api:
     build:
@@ -48,7 +50,7 @@ services:
       - "4000:4000"
     command: npm run dev
     environment:
-      PORT: 4000
+      - PORT=4000
 
   core:
     build:
@@ -65,7 +67,7 @@ services:
       - "8081:8081"
     command: npm run dev
     environment:
-      PORT: 8081
+      - PORT=8081
     depends_on:
       - core-db
 
@@ -76,9 +78,9 @@ services:
     volumes:
       - ./core-db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: core
-      POSTGRES_DB: core
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=core
+      - POSTGRES_DB=core
 
   eats365:
     build:
@@ -95,7 +97,7 @@ services:
       - "8082:8082"
     command: npm run dev
     environment:
-      PORT: 8082
+      - PORT=8082
     depends_on:
       - eats365-db
 
@@ -106,6 +108,20 @@ services:
     volumes:
       - ./eats365-db-data:/var/lib/postgresql/data
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: eats365
-      POSTGRES_DB: eats365
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=eats365
+      - POSTGRES_DB=eats365
+  
+  db-gui:
+    image: dpage/pgadmin4
+    restart: always
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@admin.com
+      - PGADMIN_DEFAULT_PASSWORD=admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+
+volumes:
+  pgadmin-data:
