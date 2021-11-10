@@ -1,5 +1,6 @@
 import express from "express";
 import { Kafka, logLevel } from "kafkajs";
+import { coreReq } from "./core-req";
 
 const kafka = new Kafka({
   clientId: "my-app",
@@ -15,15 +16,15 @@ const app = express();
 app.use(express.json());
 
 app.post("/order", async ({ body }, res) => {
-  await producer.connect();
-  await producer.send({
-    topic: "order-created",
-    messages: [
-      {
-        value: JSON.stringify(body),
-      },
-    ],
-  });
+  try {
+    // TODO: Schema validation before calling Core API
+    await coreReq.post("/order", {
+      ...body,
+    });
+
+  } catch (error) {
+    console.error(error);
+  }
 
   res.send({
     success: true,
